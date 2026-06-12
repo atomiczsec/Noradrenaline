@@ -1,0 +1,7 @@
+# Module and test runner build output
+build/
+
+# Stray compile artifacts
+*.o
+*.dylib
+*.so
