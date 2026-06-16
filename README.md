@@ -46,6 +46,7 @@ Native Linux and macOS modules built as small shared libraries for agent workflo
 | **[netjoin_query](discovery/netjoin_query/)** | Reports hostname, OS version, and local macOS/Linux directory, domain, workgroup, or realm evidence. |
 | **[os_version](discovery/os_version/)** | Collects macOS and Linux product, version, kernel, architecture, and install-age evidence as the Unix equivalent of `win_version`. |
 | **[proxy_enum](discovery/proxy_enum/)** | Enumerates proxy configuration evidence from environment variables, system files, package-manager settings, and browser policy/profile files. |
+| **[wallpaper_enum](discovery/wallpaper_enum/)** | Enumerates macOS display wallpaper paths and Linux desktop wallpaper configuration evidence that can reveal internal shares or managed assets. |
 
 ## Execution
 
