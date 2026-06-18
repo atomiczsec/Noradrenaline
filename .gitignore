@@ -1,6 +1,9 @@
 # Module and test runner build output
 build/
 
+# Local Cursor rules
+.cursor/rules/
+
 # Stray compile artifacts
 *.o
 *.dylib

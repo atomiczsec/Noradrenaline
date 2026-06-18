@@ -41,6 +41,7 @@ Native Linux and macOS modules built as small shared libraries for agent workflo
 | **Module** | **Use** |
 |------------|---------|
 | **[app_count](discovery/app_count/)** | Counts unique installed application indicators from standard macOS `.app` bundle locations or Linux `.desktop` launcher locations. |
+| **[ide_extensions](discovery/ide_extensions/)** | Enumerates installed VS Code, Cursor, Windsurf, VSCodium, and remote-server IDE extensions from the current user profile with bounded manifest parsing. |
 | **[mdm_policy_artifacts](discovery/mdm_policy_artifacts/)** | Scores locally observable macOS MDM and Linux endpoint-management artifacts to assess enrollment or managed posture. |
 | **[native_env](discovery/native_env/)** | Lists environment variables or returns a specific environment variable from the agent process. Useful for validating the module ABI and inspecting execution context. |
 | **[netjoin_query](discovery/netjoin_query/)** | Reports hostname, OS version, and local macOS/Linux directory, domain, workgroup, or realm evidence. |
