@@ -23,6 +23,7 @@ Native Linux and macOS modules built as small shared libraries for agent workflo
 | **Module** | **Use** |
 |------------|---------|
 | **[ai_surface](collection/ai_surface/)** | Maps AI tooling, AI agent profiles, and MCP configuration files on macOS and Linux developer endpoints with bounded config previews. |
+| **[terminal_history](collection/terminal_history/)** | Inventories current-user shell history and terminal recorder artifacts with bounded exact tail previews and opt-in chunk reads. |
 
 ## Community
 
