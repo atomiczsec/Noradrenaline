@@ -23,10 +23,36 @@ tests/native_runner/build/native_runner \
 ## Example
 
 ```text
-[+] User LaunchAgents inventory
-    Plist files: 1
+[+] launchd_enum
+    Platform model: macOS current-user launchd persistence surface
+    Home: /Users/operator
 
-    [1] com.example.agent.plist
-        Label: com.example.agent
-        ProgramArguments[0]: /usr/local/bin/example-agent
+[+] Indicator: User LaunchAgents directory
+    Path: /Users/operator/Library/LaunchAgents
+    Status: present
+    Score: +4
+    Modified: 2026-08-28 16:05:22 EDT (epoch 1787947522)
+
+[+] User LaunchAgents inventory
+    Directory: /Users/operator/Library/LaunchAgents
+    Plist files: 2
+
+    [1] com.google.GoogleUpdater.wake.plist
+        Path: /Users/operator/Library/LaunchAgents/com.google.GoogleUpdater.wake.plist
+        Modified: 2026-08-21 09:42:14 EDT (epoch 1787319734)
+        Label: com.google.GoogleUpdater.wake
+        ProgramArguments[0]: /Users/operator/Library/Application Support/Google/GoogleUpdater/Current/GoogleUpdater.app/Contents/MacOS/GoogleUpdater
+
+    [2] com.vendor.helper.plist
+        Path: /Users/operator/Library/LaunchAgents/com.vendor.helper.plist
+        Modified: 2026-08-28 16:05:22 EDT (epoch 1787947522)
+        Label: unavailable (binary or nonstandard plist)
+
+[i] Indicator: User LaunchDaemons directory
+    Path: /Users/operator/Library/LaunchDaemons
+    Status: absent
+
+[+] Posture Verdict
+    User persistence surface: present
+    Score: 4/10
 ```
