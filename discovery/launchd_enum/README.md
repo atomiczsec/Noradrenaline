@@ -28,6 +28,7 @@ Maximum score is 8/10 when both directories exist. The Posture Verdict reports *
     Path: /Users/operator/Library/LaunchAgents
     Status: present
     Score: +4
+    Modified: 2026-08-30 14:30:00 PDT (epoch 1756594200)
 
 [i] Indicator: User LaunchDaemons directory
     Path: /Users/operator/Library/LaunchDaemons
@@ -42,6 +43,7 @@ Maximum score is 8/10 when both directories exist. The Posture Verdict reports *
 ## OPSEC Notes
 
 - Query-only: uses in-process `stat` on two user-home directories; no process spawn.
+- When a directory is present, output includes `st_mtime` from the same `stat` call (human-readable time plus Unix epoch).
 - No `launchctl`, directory listings, label enumeration, or plist parsing.
 - Current user only: checks `~/Library/LaunchAgents` and `~/Library/LaunchDaemons`; skips `/Library`, `/System`, and `/System/Library/LaunchDaemons`.
 

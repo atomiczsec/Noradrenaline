@@ -64,6 +64,8 @@ assert_contains "$empty_output" "[i] Indicator: User LaunchAgents directory"
 assert_contains "$empty_output" "[i] Indicator: User LaunchDaemons directory"
 assert_contains "$empty_output" "Status: absent"
 assert_contains "$empty_output" "User persistence surface: absent"
+assert_not_contains "$empty_output" "    Modified:"
+assert_not_contains "$empty_output" "epoch"
 
 empty_score="$(extract_score "$empty_output")"
 if [[ -z "$empty_score" ]]; then
@@ -84,6 +86,8 @@ assert_contains "$both_present_output" "[+] Indicator: User LaunchDaemons direct
 assert_contains "$both_present_output" "LaunchAgents"
 assert_contains "$both_present_output" "LaunchDaemons"
 assert_contains "$both_present_output" "Status: present"
+assert_contains "$both_present_output" "    Modified:"
+assert_contains "$both_present_output" "(epoch "
 assert_contains "$both_present_output" "User persistence surface: present"
 assert_not_contains "$both_present_output" "[i] Indicator: User LaunchAgents directory"
 assert_not_contains "$both_present_output" "[i] Indicator: User LaunchDaemons directory"

@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <time.h>
 
 #define EXPORT __attribute__((visibility("default")))
 #define OUT_SIZE 16384
@@ -30,9 +31,11 @@ static int appendf(size_t *used, const char *fmt, ...) {
     return 1;
 }
 
-static int path_exists(const char *path) {
-    struct stat st;
-    return path != NULL && stat(path, &st) == 0;
+static int stat_path(const char *path, struct stat *st_out) {
+    if (path == NULL || st_out == NULL) {
+        return 0;
+    }
+    return stat(path, st_out) == 0;
 }
 
 static int build_home_path(char *dest, size_t dest_size, const char *home, const char *suffix) {
@@ -44,13 +47,25 @@ static int build_home_path(char *dest, size_t dest_size, const char *home, const
 }
 
 static void report_path_indicator(size_t *used, int *score, int points_if_present,
-                                  const char *name, const char *path, int present) {
+                                  const char *name, const char *path) {
+    struct stat st;
+    int present = stat_path(path, &st);
+
     if (present) {
         *score += points_if_present;
         appendf(used, "[+] Indicator: %s\n", name);
         appendf(used, "    Path: %s\n", path);
         appendf(used, "    Status: present\n");
         appendf(used, "    Score: +%d\n", points_if_present);
+
+        char time_buf[64];
+        struct tm tm;
+        if (localtime_r(&st.st_mtime, &tm) != NULL &&
+            strftime(time_buf, sizeof(time_buf), "%Y-%m-%d %H:%M:%S %Z", &tm) > 0) {
+            appendf(used, "    Modified: %s (epoch %lld)\n", time_buf, (long long)st.st_mtime);
+        } else {
+            appendf(used, "    Modified: epoch %lld\n", (long long)st.st_mtime);
+        }
         return;
     }
 
@@ -77,13 +92,11 @@ static char *run_assessment(void) {
 
     char launch_agents[PATH_MAX];
     build_home_path(launch_agents, sizeof(launch_agents), home, "/Library/LaunchAgents");
-    report_path_indicator(&used, &score, 4, "User LaunchAgents directory",
-                          launch_agents, path_exists(launch_agents));
+    report_path_indicator(&used, &score, 4, "User LaunchAgents directory", launch_agents);
 
     char launch_daemons[PATH_MAX];
     build_home_path(launch_daemons, sizeof(launch_daemons), home, "/Library/LaunchDaemons");
-    report_path_indicator(&used, &score, 4, "User LaunchDaemons directory",
-                          launch_daemons, path_exists(launch_daemons));
+    report_path_indicator(&used, &score, 4, "User LaunchDaemons directory", launch_daemons);
 
     appendf(&used, "\n[+] Posture Verdict\n");
     if (score > 0) {
