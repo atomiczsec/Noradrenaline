@@ -123,6 +123,29 @@ static void report_sip_indicator(size_t *used, int *score) {
     appendf(used, "    Score: +%d\n", points);
 }
 
+static int fde_escrow_prefs_present(const char *home, char *report_path, size_t report_path_size) {
+    static const char *candidates[] = {
+        "/Library/Preferences/com.apple.security.FDERecoveryKeyEscrow.plist",
+        "/Library/Preferences/com.apple.MCX.FileVault2.plist",
+        NULL,
+    };
+
+    for (int i = 0; candidates[i] != NULL; i++) {
+        char path[PATH_MAX];
+        if (!build_home_path(path, sizeof(path), home, candidates[i])) {
+            continue;
+        }
+        if (path_exists(path)) {
+            snprintf(report_path, report_path_size, "%s", path);
+            return 1;
+        }
+    }
+
+    build_home_path(report_path, report_path_size, home,
+                    "/Library/Preferences/com.apple.security.FDERecoveryKeyEscrow.plist");
+    return 0;
+}
+
 static int screen_time_prefs_present(const char *home, char *report_path, size_t report_path_size) {
     static const char *candidates[] = {
         "/Library/Preferences/com.apple.ScreenTimeAgent.plist",
@@ -169,10 +192,9 @@ static char *run_assessment(void) {
     report_sip_indicator(&used, &score);
 
     char fde_escrow[PATH_MAX];
-    build_home_path(fde_escrow, sizeof(fde_escrow), home,
-                    "/Library/Preferences/com.apple.preference.security.plist");
-    report_path_indicator(&used, &score, 2, "FileVault user recovery escrow preferences",
-                          fde_escrow, path_exists(fde_escrow));
+    int fde_escrow_present = fde_escrow_prefs_present(home, fde_escrow, sizeof(fde_escrow));
+    report_path_indicator(&used, &score, 2, "FileVault FDE escrow preferences",
+                          fde_escrow, fde_escrow_present);
 
     char screen_time[PATH_MAX];
     int screen_time_present = screen_time_prefs_present(home, screen_time, sizeof(screen_time));

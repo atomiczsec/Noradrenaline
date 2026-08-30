@@ -25,8 +25,8 @@ Assesses macOS current-user privacy and hardening posture using query-only path 
     Value: enabled
     Score: +3
 
-[i] Indicator: FileVault user recovery escrow preferences
-    Path: /Users/operator/Library/Preferences/com.apple.preference.security.plist
+[i] Indicator: FileVault FDE escrow preferences
+    Path: /Users/operator/Library/Preferences/com.apple.security.FDERecoveryKeyEscrow.plist
     Status: absent
 
 [+] Indicator: Screen Time preferences
