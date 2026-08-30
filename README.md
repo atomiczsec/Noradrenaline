@@ -48,6 +48,7 @@ Noradrenaline is a collection of high-performance post-exploitation shared libra
 | **[netjoin_query](discovery/netjoin_query/)** | Reports hostname, OS version, and local macOS/Linux directory, domain, workgroup, or realm evidence. |
 | **[os_version](discovery/os_version/)** | Collects macOS and Linux product, version, kernel, architecture, and install-age evidence as the Unix equivalent of `win_version`. |
 | **[proxy_enum](discovery/proxy_enum/)** | Enumerates proxy configuration evidence from environment variables, system files, package-manager settings, and browser policy/profile files. |
+| **[tcc_privacy_surface](discovery/tcc_privacy_surface/)** | Scores macOS current-user privacy posture from user TCC, SIP, FileVault escrow, and Screen Time indicator paths without reading TCC.db or spawning tools. |
 | **[wallpaper_enum](discovery/wallpaper_enum/)** | Enumerates macOS display wallpaper paths and Linux desktop wallpaper configuration evidence that can reveal internal shares or managed assets. |
 
 ## Execution
