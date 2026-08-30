@@ -7,6 +7,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/sysctl.h>
+#include <time.h>
 #include <unistd.h>
 
 #define EXPORT __attribute__((visibility("default")))
@@ -38,9 +39,13 @@ static int appendf(size_t *used, const char *fmt, ...) {
     return 1;
 }
 
+static int stat_path(const char *path, struct stat *st) {
+    return path != NULL && st != NULL && stat(path, st) == 0;
+}
+
 static int path_exists(const char *path) {
     struct stat st;
-    return path != NULL && stat(path, &st) == 0;
+    return stat_path(path, &st);
 }
 
 static int build_home_path(char *dest, size_t dest_size, const char *home, const char *suffix) {
@@ -51,20 +56,68 @@ static int build_home_path(char *dest, size_t dest_size, const char *home, const
     return written > 0 && (size_t)written < dest_size;
 }
 
+static void report_file_details(size_t *used, const struct stat *st) {
+    char modified[64];
+    struct tm local_time;
+    if (localtime_r(&st->st_mtime, &local_time) != NULL &&
+        strftime(modified, sizeof(modified), "%Y-%m-%d %H:%M:%S %Z", &local_time) > 0) {
+        appendf(used, "    Modified: %s (epoch %lld)\n", modified, (long long)st->st_mtime);
+    } else {
+        appendf(used, "    Modified: epoch %lld\n", (long long)st->st_mtime);
+    }
+    appendf(used, "    Type: %s\n", S_ISREG(st->st_mode) ? "regular file" :
+                                      S_ISDIR(st->st_mode) ? "directory" : "other");
+    appendf(used, "    Size: %lld bytes\n", (long long)st->st_size);
+    appendf(used, "    Owner UID: %u\n", st->st_uid);
+    appendf(used, "    Mode: %04o\n", st->st_mode & 07777);
+}
+
 static void report_path_indicator(size_t *used, int *score, int points_if_present,
-                                  const char *name, const char *path, int present) {
+                                  const char *name, const char *path, const char *meaning) {
+    struct stat st;
+    int present = stat_path(path, &st);
     if (present) {
         *score += points_if_present;
         appendf(used, "[+] Indicator: %s\n", name);
         appendf(used, "    Path: %s\n", path);
         appendf(used, "    Status: present\n");
+        report_file_details(used, &st);
         appendf(used, "    Score: +%d\n", points_if_present);
+    } else {
+        appendf(used, "[i] Indicator: %s\n", name);
+        appendf(used, "    Path: %s\n", path);
+        appendf(used, "    Status: absent\n");
+    }
+    appendf(used, "    Meaning: %s\n", meaning);
+}
+
+static void report_sip_exceptions(size_t *used, uint32_t config) {
+    static const struct {
+        uint32_t flag;
+        const char *name;
+    } exceptions[] = {
+        {0x001U, "unrestricted filesystem"},
+        {0x002U, "unrestricted kernel extensions"},
+        {0x004U, "task_for_pid allowed"},
+        {0x008U, "kernel debugger allowed"},
+        {0x010U, "Apple-internal mode"},
+        {0x020U, "unrestricted DTrace"},
+        {0x040U, "unrestricted NVRAM"},
+        {0x080U, "device configuration allowed"},
+        {0x800U, "unrestricted authenticated root"},
+    };
+
+    appendf(used, "    Active exceptions:");
+    if (config == 0) {
+        appendf(used, " none\n");
         return;
     }
-
-    appendf(used, "[i] Indicator: %s\n", name);
-    appendf(used, "    Path: %s\n", path);
-    appendf(used, "    Status: absent\n");
+    appendf(used, "\n");
+    for (size_t i = 0; i < sizeof(exceptions) / sizeof(exceptions[0]); i++) {
+        if ((config & exceptions[i].flag) != 0) {
+            appendf(used, "      - %s (0x%03x)\n", exceptions[i].name, exceptions[i].flag);
+        }
+    }
 }
 
 static int query_sip_config(uint32_t *config_out) {
@@ -121,6 +174,8 @@ static void report_sip_indicator(size_t *used, int *score) {
     } else {
         appendf(used, "    Value: relaxed (config=0x%x)\n", config);
     }
+    report_sip_exceptions(used, config);
+    appendf(used, "    Meaning: SIP protects system files and runtime operations; listed exceptions show relaxed controls.\n");
     appendf(used, "    Score: +%d\n", points);
 }
 
@@ -188,18 +243,23 @@ static char *run_assessment(void) {
 
     char tcc_db[PATH_MAX];
     build_home_path(tcc_db, sizeof(tcc_db), home, "/Library/Application Support/com.apple.TCC/TCC.db");
-    report_path_indicator(&used, &score, 2, "User TCC database", tcc_db, path_exists(tcc_db));
+    report_path_indicator(&used, &score, 2, "User TCC database", tcc_db,
+                          "Stores current-user privacy decisions; presence does not reveal which apps are allowed.");
 
     report_sip_indicator(&used, &score);
 
     char fde_escrow[PATH_MAX];
     int fde_escrow_present = fde_escrow_prefs_present(home, fde_escrow, sizeof(fde_escrow));
     report_path_indicator(&used, &score, 2, "FileVault FDE escrow preferences",
-                          fde_escrow, fde_escrow_present);
+                          fde_escrow,
+                          fde_escrow_present ? "An escrow preference artifact exists; this does not prove FileVault is enabled."
+                                             : "No current-user escrow preference artifact was found; FileVault may still be enabled.");
 
     char screen_time[PATH_MAX];
     int screen_time_present = screen_time_prefs_present(home, screen_time, sizeof(screen_time));
-    report_path_indicator(&used, &score, 2, "Screen Time preferences", screen_time, screen_time_present);
+    report_path_indicator(&used, &score, 2, "Screen Time preferences", screen_time,
+                          screen_time_present ? "A current-user Screen Time preference artifact exists."
+                                              : "No current-user Screen Time preference artifact was found.");
 
     appendf(&used, "\n[+] Posture Verdict\n");
     if (score >= 7) {
@@ -210,7 +270,7 @@ static char *run_assessment(void) {
         appendf(&used, "    Privacy posture: Permissive\n");
     }
     appendf(&used, "    Score: %d/10\n", score > 10 ? 10 : score);
-    appendf(&used, "    Note: query-only path checks for the current user; no TCC.db reads.\n");
+    appendf(&used, "    Evidence collected: file metadata and in-process SIP state; TCC.db contents were not read.\n");
     return output;
 }
 #endif

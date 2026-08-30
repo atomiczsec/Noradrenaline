@@ -79,6 +79,8 @@ fi
 
 mkdir -p "$POPULATED_HOME/Library/LaunchAgents"
 mkdir -p "$POPULATED_HOME/Library/LaunchDaemons"
+: > "$POPULATED_HOME/Library/LaunchAgents/com.example.agent.plist"
+: > "$POPULATED_HOME/Library/LaunchDaemons/com.example.daemon.plist"
 
 both_present_output="$(run_module "$POPULATED_HOME")"
 assert_contains "$both_present_output" "[+] Indicator: User LaunchAgents directory"
@@ -89,6 +91,12 @@ assert_contains "$both_present_output" "Status: present"
 assert_contains "$both_present_output" "    Modified:"
 assert_contains "$both_present_output" "(epoch "
 assert_contains "$both_present_output" "User persistence surface: present"
+assert_contains "$both_present_output" "User LaunchAgents inventory"
+assert_contains "$both_present_output" "User LaunchDaemons inventory"
+assert_contains "$both_present_output" "Plist files: 1"
+assert_contains "$both_present_output" "com.example.agent.plist"
+assert_contains "$both_present_output" "com.example.daemon.plist"
+assert_contains "$both_present_output" "Label: unavailable"
 assert_not_contains "$both_present_output" "[i] Indicator: User LaunchAgents directory"
 assert_not_contains "$both_present_output" "[i] Indicator: User LaunchDaemons directory"
 

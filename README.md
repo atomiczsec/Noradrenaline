@@ -43,13 +43,13 @@ Noradrenaline is a collection of high-performance post-exploitation shared libra
 |------------|---------|
 | **[app_count](discovery/app_count/)** | Counts unique installed application indicators from standard macOS `.app` bundle locations or Linux `.desktop` launcher locations. |
 | **[ide_extensions](discovery/ide_extensions/)** | Enumerates installed VS Code, Cursor, Windsurf, VSCodium, and remote-server IDE extensions from the current user profile with bounded manifest parsing. |
-| **[launchd_enum](discovery/launchd_enum/)** | Scores macOS current-user launchd persistence surface from LaunchAgents and LaunchDaemons directory presence without launchctl, listings, or plist reads. |
+| **[launchd_enum](discovery/launchd_enum/)** | Inventories current-user LaunchAgents and LaunchDaemons plist paths, labels, programs, and modification times without invoking launchctl. |
 | **[mdm_policy_artifacts](discovery/mdm_policy_artifacts/)** | Scores locally observable macOS MDM and Linux endpoint-management artifacts to assess enrollment or managed posture. |
 | **[native_env](discovery/native_env/)** | Lists environment variables or returns a specific environment variable from the agent process. Useful for validating the module ABI and inspecting execution context. |
 | **[netjoin_query](discovery/netjoin_query/)** | Reports hostname, OS version, and local macOS/Linux directory, domain, workgroup, or realm evidence. |
 | **[os_version](discovery/os_version/)** | Collects macOS and Linux product, version, kernel, architecture, and install-age evidence as the Unix equivalent of `win_version`. |
 | **[proxy_enum](discovery/proxy_enum/)** | Enumerates proxy configuration evidence from environment variables, system files, package-manager settings, and browser policy/profile files. |
-| **[tcc_privacy_surface](discovery/tcc_privacy_surface/)** | Scores macOS current-user privacy posture from user TCC, SIP, FileVault escrow, and Screen Time indicator paths without reading TCC.db or spawning tools. |
+| **[tcc_privacy_surface](discovery/tcc_privacy_surface/)** | Reports TCC file metadata, decoded SIP exceptions, and FileVault escrow and Screen Time evidence without reading TCC.db contents or spawning tools. |
 | **[wallpaper_enum](discovery/wallpaper_enum/)** | Enumerates macOS display wallpaper paths and Linux desktop wallpaper configuration evidence that can reveal internal shares or managed assets. |
 
 ## Execution
