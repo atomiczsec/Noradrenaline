@@ -1,4 +1,4 @@
-MODULES := collection/ai_surface collection/terminal_history credential_access/cloud_metadata_check discovery/app_count discovery/ide_extensions discovery/mdm_policy_artifacts discovery/native_env discovery/netjoin_query discovery/os_version discovery/proxy_enum discovery/tcc_privacy_surface discovery/wallpaper_enum execution/firewall_rule
+MODULES := collection/ai_surface collection/terminal_history credential_access/cloud_metadata_check discovery/app_count discovery/ide_extensions discovery/launchd_enum discovery/mdm_policy_artifacts discovery/native_env discovery/netjoin_query discovery/os_version discovery/proxy_enum discovery/tcc_privacy_surface discovery/wallpaper_enum execution/firewall_rule
 NATIVE_RUNNER_DIR := tests/native_runner
 UNAME_S := $(shell uname -s)
 PLATFORM ?= host
