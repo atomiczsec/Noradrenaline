@@ -35,6 +35,7 @@ Noradrenaline is a collection of high-performance post-exploitation shared libra
 
 | **Module** | **Use** |
 |------------|---------|
+| **[cicd_credential_hunt](credential_access/cicd_credential_hunt/)** | Finds CI/CD, cloud, registry, deployment, Git, and SSH credential artifacts in the current user's home. Reports path and size only; no file-content reads. |
 | **[cloud_metadata_check](credential_access/cloud_metadata_check/)** | Probes the local cloud Instance Metadata Service for AWS, Azure, and GCP, reporting provider, context, IMDS mode, and bounded identity snippets unless run in `presence` mode. |
 
 ## Discovery
