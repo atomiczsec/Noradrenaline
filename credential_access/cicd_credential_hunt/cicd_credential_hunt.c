@@ -11,10 +11,11 @@
 
 #define OUT_SIZE 8192
 #define MAX_PEM_HITS 8
+#define MAX_CACHE_HITS 8
 
 typedef struct {
-    int fixed_hits;
-    int ssh_config_hits;
+    int credential_hits;
+    int context_hits;
     int ssh_key_hits;
 } scan_results_t;
 
@@ -50,16 +51,12 @@ static int join_home_path(const char *home, const char *suffix, char *out, size_
 
     size_t home_len = strlen(home);
     const char *rest = suffix;
-    char sep = '/';
-
-    if (home_len > 0 && home[home_len - 1] == '/') {
-        sep = '\0';
-    }
     if (suffix[0] == '/') {
         rest = suffix + 1;
     }
 
-    int n = snprintf(out, out_size, "%s%c%s", home, sep != '\0' ? sep : '\0', rest);
+    int n = snprintf(out, out_size, "%s%s%s", home,
+                     home_len > 0 && home[home_len - 1] == '/' ? "" : "/", rest);
     return n > 0 && (size_t)n < out_size;
 }
 
@@ -116,9 +113,9 @@ static void report_text_artifact(size_t *used, scan_results_t *results, const ch
     appendf(used, "[i]   Size: %ld bytes\n", (long)size);
 
     if (class_id == 0) {
-        results->fixed_hits++;
-    } else if (class_id == 1) {
-        results->ssh_config_hits++;
+        results->credential_hits++;
+    } else {
+        results->context_hits++;
     }
 }
 
@@ -137,8 +134,39 @@ static void report_private_key(size_t *used, scan_results_t *results, const char
 static void inspect_fixed_patterns(size_t *used, scan_results_t *results, const char *home) {
     char path[PATH_MAX];
 
-    if (join_home_path(home, ".config/gh/hosts.yml", path, sizeof(path))) {
-        report_text_artifact(used, results, "GitHub CLI auth", path, 0);
+    static const struct {
+        const char *suffix;
+        const char *label;
+        int class_id;
+    } patterns[] = {
+        {".config/gh/hosts.yml", "GitHub CLI auth", 0},
+        {".config/glab-cli/config.yml", "GitLab CLI auth", 0},
+        {".npmrc", "npm config", 0},
+        {".pypirc", "PyPI config", 0},
+        {".docker/config.json", "Docker config", 0},
+        {".config/containers/auth.json", "Container registry auth", 0},
+        {".git-credentials", "Git credential store", 0},
+        {".aws/credentials", "AWS shared credentials", 0},
+        {".aws/config", "AWS config", 0},
+        {".config/gcloud/application_default_credentials.json", "Google Cloud ADC", 0},
+        {".kube/config", "Kubernetes config", 0},
+        {".terraform.d/credentials.tfrc.json", "Terraform CLI credentials", 0},
+        {".terraformrc", "Terraform CLI config", 0},
+        {".cargo/credentials.toml", "Cargo registry credentials", 0},
+        {".cargo/credentials", "Cargo registry credentials (legacy)", 0},
+        {".m2/settings.xml", "Maven settings", 0},
+        {".gradle/gradle.properties", "Gradle properties", 0},
+        {".gem/credentials", "RubyGems credentials", 0},
+        {".netrc", "netrc credentials", 0},
+        {".vault-token", "Vault token", 0},
+        {".gitconfig", "Git config context", 1},
+        {NULL, NULL, 0},
+    };
+
+    for (int i = 0; patterns[i].suffix != NULL; i++) {
+        if (join_home_path(home, patterns[i].suffix, path, sizeof(path))) {
+            report_text_artifact(used, results, patterns[i].label, path, patterns[i].class_id);
+        }
     }
 
 #if defined(__APPLE__)
@@ -147,21 +175,35 @@ static void inspect_fixed_patterns(size_t *used, scan_results_t *results, const 
     }
 #endif
 
-    if (join_home_path(home, ".npmrc", path, sizeof(path))) {
-        report_text_artifact(used, results, "npm config", path, 0);
+}
+
+static void inspect_aws_cache(size_t *used, scan_results_t *results, const char *home) {
+    char cache_root[PATH_MAX];
+    if (!join_home_path(home, ".aws/cli/cache", cache_root, sizeof(cache_root))) {
+        return;
     }
-    if (join_home_path(home, ".pypirc", path, sizeof(path))) {
-        report_text_artifact(used, results, "PyPI config", path, 0);
+    DIR *dir = opendir(cache_root);
+    if (dir == NULL) {
+        return;
     }
-    if (join_home_path(home, ".docker/config.json", path, sizeof(path))) {
-        report_text_artifact(used, results, "Docker config", path, 0);
+    int hits = 0;
+    struct dirent *entry;
+    while ((entry = readdir(dir)) != NULL && hits < MAX_CACHE_HITS) {
+        if (entry->d_name[0] == '.' || !ends_with_ci(entry->d_name, ".json")) {
+            continue;
+        }
+        char path[PATH_MAX];
+        int n = snprintf(path, sizeof(path), "%s/%s", cache_root, entry->d_name);
+        if (n <= 0 || (size_t)n >= sizeof(path)) {
+            continue;
+        }
+        int before = results->credential_hits;
+        report_text_artifact(used, results, "AWS CLI cached credential", path, 0);
+        if (results->credential_hits > before) {
+            hits++;
+        }
     }
-    if (join_home_path(home, ".git-credentials", path, sizeof(path))) {
-        report_text_artifact(used, results, "Git credential store", path, 0);
-    }
-    if (join_home_path(home, ".gitconfig", path, sizeof(path))) {
-        report_text_artifact(used, results, "Git config", path, 0);
-    }
+    closedir(dir);
 }
 
 static void inspect_ssh_artifacts(size_t *used, scan_results_t *results, const char *home) {
@@ -178,7 +220,7 @@ static void inspect_ssh_artifacts(size_t *used, scan_results_t *results, const c
     }
 
     if (join_home_path(home, ".ssh/config", candidate, sizeof(candidate))) {
-        report_text_artifact(used, results, "SSH config", candidate, 1);
+        report_text_artifact(used, results, "SSH config context", candidate, 1);
     }
 
     static const char *key_names[] = {"id_rsa", "id_ed25519", "id_ecdsa", "identity", NULL};
@@ -251,16 +293,17 @@ EXPORT char *cicd_credential_hunt(int argc, char **argv) {
 
     if (home == NULL || home[0] == '\0') {
         appendf(&used,
-                "[i] Summary: fixed artifacts=%d, ssh configs=%d, ssh key candidates=%d\n",
-                results.fixed_hits, results.ssh_config_hits, results.ssh_key_hits);
+                "[i] Summary: credential artifacts=%d, config context=%d, ssh key candidates=%d\n",
+                results.credential_hits, results.context_hits, results.ssh_key_hits);
         return output;
     }
 
     inspect_fixed_patterns(&used, &results, home);
+    inspect_aws_cache(&used, &results, home);
     inspect_ssh_artifacts(&used, &results, home);
 
     appendf(&used,
-            "[i] Summary: fixed artifacts=%d, ssh configs=%d, ssh key candidates=%d\n",
-            results.fixed_hits, results.ssh_config_hits, results.ssh_key_hits);
+            "[i] Summary: credential artifacts=%d, config context=%d, ssh key candidates=%d\n",
+            results.credential_hits, results.context_hits, results.ssh_key_hits);
     return output;
 }
