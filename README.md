@@ -1,5 +1,5 @@
 # Noradrenaline Shared Library Modules
-<img src="assets/Noradrenaline-logo.png" width="100%">
+<img src="assets/Noradrenaline-logo.png" width="75%">
 
 Noradrenaline is a collection of high-performance post-exploitation shared libraries designed for native execution on macOS and Linux endpoints. On Poseidon, macOS builds run through `execute_library` today; Linux builds are not yet available on public agents, though other agents may already support them. Linux support for public agents is actively in development.
 
