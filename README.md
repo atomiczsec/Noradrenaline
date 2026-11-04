@@ -57,6 +57,7 @@ Noradrenaline is a collection of high-performance post-exploitation shared libra
 | **[proxy_enum](discovery/proxy_enum/)** | Enumerates proxy configuration evidence from environment variables, system files, package-manager settings, and browser policy/profile files. |
 | **[tcc_privacy_surface](discovery/tcc_privacy_surface/)** | Reports TCC file metadata, decoded SIP exceptions, and FileVault escrow and Screen Time evidence without reading TCC.db contents or spawning tools. |
 | **[wallpaper_enum](discovery/wallpaper_enum/)** | Enumerates macOS display wallpaper paths and Linux desktop wallpaper configuration evidence that can reveal internal shares or managed assets. |
+| **[wireless_situational_awareness](discovery/wireless_situational_awareness/)** | Shaped rootless macOS Wi-Fi and Bluetooth situational awareness for operators: association, addressing, nearby security mix, preferred SSIDs, and Bluetooth controller plus paired devices. |
 
 ## Execution
 
